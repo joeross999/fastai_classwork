@@ -1,0 +1,16 @@
+LICENSE
+MANIFEST.in
+README.md
+settings.ini
+setup.py
+miniai/__init__.py
+miniai/core.py
+miniai/train.py
+miniai/training.py
+miniai.egg-info/PKG-INFO
+miniai.egg-info/SOURCES.txt
+miniai.egg-info/dependency_links.txt
+miniai.egg-info/entry_points.txt
+miniai.egg-info/not-zip-safe
+miniai.egg-info/requires.txt
+miniai.egg-info/top_level.txt

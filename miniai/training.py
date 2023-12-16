@@ -25,25 +25,25 @@ class Dataset():
     def __getitem__(self, i): return self.x[i], self.y[i]
 
 # %% ../notebooks/04_minibatch.ipynb 36
-def fit():
+def fit(epochs, model, loss_func, opt, train_dl, valid_dl):
     for epoch in range(epochs):
-        for xb, yb in train_dl:
-            preds = model(xb)
-            loss = loss_func(preds, yb)
+        model.train()
+        for xb,yb in train_dl:
+            loss = loss_func(model(xb), yb)
             loss.backward()
             opt.step()
             opt.zero_grad()
-        report(loss, preds, yb)
-        
+
+        model.eval()
         with torch.no_grad():
-            tot_loss, tot_acc, count = 0., 0., 0
-            for xb, yb in valid_dl:
+            tot_loss,tot_acc,count = 0.,0.,0
+            for xb,yb in valid_dl:
                 pred = model(xb)
                 n = len(xb)
                 count += n
                 tot_loss += loss_func(pred,yb).item()*n
                 tot_acc  += accuracy (pred,yb).item()*n
-            print(epoch, tot_loss/count, tot_acc/count)
+        print(epoch, tot_loss/count, tot_acc/count)
     return tot_loss/count, tot_acc/count
 
 # %% ../notebooks/04_minibatch.ipynb 38
