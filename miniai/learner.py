@@ -2,8 +2,8 @@
 
 # %% auto 0
 __all__ = ['CancelFitException', 'CancelBatchException', 'CancelEpochException', 'Callback', 'run_cbs', 'SingleBatchCB', 'to_cpu',
-           'DeviceCB', 'with_cbs', 'Learner', 'TrainCB', 'ProgressCB', 'TrainLearner', 'MomentumLearner', 'LRFinderCB',
-           'lr_find']
+           'MetricsCB', 'DeviceCB', 'with_cbs', 'Learner', 'TrainCB', 'ProgressCB', 'TrainLearner', 'MomentumLearner',
+           'LRFinderCB', 'lr_find']
 
 # %% ../notebooks/09_learner.ipynb 1
 import math,torch,matplotlib.pyplot as plt
@@ -50,6 +50,31 @@ def to_cpu(x):
     if isinstance(x, tuple): return tuple(to_cpu(list(x)))
     res = x.detach().cpu()
     return res.float() if res.dtype==torch.float16 else res
+
+# %% ../notebooks/09_learner.ipynb 17
+class MetricsCB(Callback):
+    def __init__(self, *ms, **metrics):
+        for o in ms: metrics[type(o).__name__] = o
+        self.metrics = metrics
+        self.all_metrics = copy(metrics)
+        self.all_metrics['loss'] = self.loss = Mean()
+        
+    def _log(self, d): print(d)
+    def before_fit(self, learn): learn.metrics = self
+    def before_epoch(self, learn): [o.reset() for o in self.all_metrics.values()]
+    
+    def after_epoch(self, learn):
+        log = {k:f'{v.compute():.3f}' for k,v in self.all_metrics.items()}
+        log['epoch'] = learn.epoch
+        log['train'] = 'train' if learn.model.training else 'eval'
+        self._log(log)
+        
+    def after_batch(self, learn):
+        x, y, *_ = to_cpu(learn.batch)
+        for m in self.metrics.values(): m.update(to_cpu(learn.preds), y)
+        self.loss.update(to_cpu(learn.loss), weight=len(x))
+
+
 
 # %% ../notebooks/09_learner.ipynb 18
 class DeviceCB(Callback):
