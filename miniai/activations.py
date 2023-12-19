@@ -11,7 +11,7 @@ from .learner import *
 
 
 # %% auto 0
-__all__ = ['set_seed', 'Hook', 'HooksCallback', 'append_stats', 'get_hist', 'get_min', 'ActivationStats']
+__all__ = ['set_seed', 'Hook', 'Hooks', 'HooksCallback', 'append_stats', 'get_hist', 'get_min', 'ActivationStats']
 
 # %% ../notebooks/10_activations.ipynb 3
 def set_seed(seed, deterministic=False):
@@ -26,7 +26,22 @@ class Hook():
     def remove(self): self.hook.remove()
     def __del__(self): self.remove()
 
-# %% ../notebooks/10_activations.ipynb 28
+# %% ../notebooks/10_activations.ipynb 24
+# Now I dont want to manage the individual hooks independently so time for a wrapper.
+# This is a context manager that returns itself and registers our hooks. 
+# The class will extend list to allow us to treat it as a list that stores the hooks
+class Hooks(list):
+    def __init__(self, modules, function): super().__init__([Hook(m, function) for m in modules])
+    def __enter__(self, *args): return self # Returns self here so we can use `with as` to get our list of hooks
+    def __exit__(self, *args): self.remove()
+    def __del__(self): self.remove()
+    def __defitem__(self, i): 
+        self.remove()
+        super().__delitem__(i)
+    def remove(self): 
+        for h in self: h.remove()
+
+# %% ../notebooks/10_activations.ipynb 27
 class HooksCallback(Callback):
     def __init__(self, hookfunc, mod_filter=fc.noop, on_train=True, on_valid=False, mods=None):
         fc.store_attr()
@@ -45,7 +60,7 @@ class HooksCallback(Callback):
     def __len__(self): return len(self.hooks)
 
 
-# %% ../notebooks/10_activations.ipynb 34
+# %% ../notebooks/10_activations.ipynb 33
 def append_stats(hook, mod, inp, outp):
     if not hasattr(hook,'stats'): hook.stats = ([],[],[])
     acts = to_cpu(outp)
@@ -54,27 +69,27 @@ def append_stats(hook, mod, inp, outp):
     hook.stats[2].append(acts.abs().histc(40,0,10)) 
 
 
-# %% ../notebooks/10_activations.ipynb 36
+# %% ../notebooks/10_activations.ipynb 35
 def get_hist(h): return torch.stack(h.stats[2]).t().float().log1p() # log here helps distribute the data in a useful visiual manner
 
 
-# %% ../notebooks/10_activations.ipynb 39
+# %% ../notebooks/10_activations.ipynb 38
 def get_min(h):
     h1 = torch.stack(h.stats[2]).t().float()
     return h1[0]/h1.sum(0)
 
 
-# %% ../notebooks/10_activations.ipynb 42
+# %% ../notebooks/10_activations.ipynb 41
 class ActivationStats(HooksCallback):
     def __init__(self, mod_filter=fc.noop): super().__init__(append_stats, mod_filter)
     def color_dim(self, figsize=(11,5)):
-        fig,axis = get_grid(len(self), figsize=figsize)
-        for ax, h in zip(axis.flat, self):
+        fig,axs = get_grid(len(self), figsize=figsize)
+        for ax, h in zip(axs.flat, self):
             show_image(get_hist(h), ax, origin='lower')
     
     def dead_chart(self, figsize=(11,5)):
-        fig,axes = get_grid(len(self), figsize=figsize)
-        for ax,h in zip(axes.flatten(), self):
+        fig,axs = get_grid(len(self), figsize=figsize)
+        for ax,h in zip(axs.flatten(), self):
             ax.plot(get_min(h))
             ax.set_ylim(0,1)
             
