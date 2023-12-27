@@ -4,8 +4,16 @@ README.md
 settings.ini
 setup.py
 miniai/__init__.py
+miniai/_modidx.py
+miniai/activations.py
+miniai/augment.py
+miniai/conv.py
 miniai/core.py
-miniai/train.py
+miniai/datasets.py
+miniai/init.py
+miniai/learner.py
+miniai/resnet.py
+miniai/sgd.py
 miniai/training.py
 miniai.egg-info/PKG-INFO
 miniai.egg-info/SOURCES.txt
