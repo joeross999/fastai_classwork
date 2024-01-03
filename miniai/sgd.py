@@ -5,13 +5,13 @@ __all__ = ['BaseSchedCB', 'BatchSchedCB', 'HasLearnCB', 'RecorderCB', 'EpochSche
 
 # %% ../notebooks/12_accel_sgd.ipynb 1
 import torch
-import matplotlib.pyplot as plt
 
 from .datasets import *
 from .conv import *
 from .learner import *
 from .activations import *
 from .init import *
+import matplotlib.pyplot as plt
 
 # %% ../notebooks/12_accel_sgd.ipynb 24
 # takes in scheduler callable to be passed the optimizer.

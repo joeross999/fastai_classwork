@@ -157,8 +157,8 @@ class Learner():
 # %% ../notebooks/09_learner.ipynb 24
 class TrainCB(Callback):
     def __init__(self, n_inp=1): self.n_inp = n_inp
-    def predict(self, learn): learn.preds = learn.model(*learn.batch[:self.n_inp])
-    def get_loss(self, learn): learn.loss = learn.loss_func(learn.preds, *learn.batch[self.n_inp:])
+    def predict(self, learn): learn.preds = learn.model(*learn.batch[:self.n_inp]) # this last piece with the n_inps allows us to pass multiple inputs to our model
+    def get_loss(self, learn): learn.loss = learn.loss_func(learn.preds, *learn.batch[self.n_inp:]) # How ever many arguments are provided are selected as inputs, the rest are outputs
     def backward(self, learn): learn.loss.backward()
     def step(self, learn): learn.opt.step()
     def zero_grad(self, learn): learn.opt.zero_grad()
@@ -179,7 +179,7 @@ class ProgressCB(Callback):
         if self.first:
             self.mbar.write(list(d), table=True)
             self.first = False
-        self.mbar.write(list(d.values()), table=True)
+        self.mbar.write([str(a) for a in list(d.values())], table=True)
 
     def before_epoch(self, learn): learn.dl = progress_bar(learn.dl, leave=False, parent=self.mbar)
     def after_batch(self, learn):
