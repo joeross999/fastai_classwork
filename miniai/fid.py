@@ -69,15 +69,26 @@ def _calc_kid(x, y, maxs=50):
 # %% ../notebooks/18_fid.ipynb 41
 class ImageEval:
     def __init__(self, model, dls, cbs=None):
-        self.learn = TrainLearner(model, dls, loss_func=fc.noop, cbs=cbs, opt_func=None)
-        self.feats = self.learn.capture_preds()[0].float().cpu().squeeze()
+        print('test')
+        self.model = model; self.cbs = cbs
+        self.learn1 = TrainLearner(model, dls, loss_func=fc.noop, cbs=cbs, opt_func=None)
+        self.feats = self.learn1.capture_preds()[0].float().cpu().squeeze()
         self.stats = _calc_stats(self.feats)
+        print(self.feats.shape)
+        
 
     def get_feats(self, samp):
-        self.learn.dls = DataLoaders([],[(samp, tensor([0]))])
-        return self.learn.capture_preds()[0].float().cpu().squeeze()
+        self.learn2 = TrainLearner(self.model, DataLoaders([],[(samp, tensor([0]))]), loss_func=fc.noop, cbs=self.cbs, opt_func=None)
+        return self.learn2.capture_preds()[0].float().cpu().squeeze()
 
-    def fid(self, samp): return _calc_fid(*self.stats, *_calc_stats(self.get_feats(samp)))
+    def fid(self, samp): 
+        n_feats = self.get_feats(samp)
+        print(n_feats.shape)
+        print("originals..")
+        o_feats = self.learn1.capture_preds()[0].float().cpu().squeeze()[:len(n_feats)]
+        print(o_feats.shape)
+
+        return _calc_fid(*_calc_stats(o_feats), *_calc_stats(n_feats))
     def fid2(self, samp): 
         return frdist(self.feats[:len(self.get_feats(samp))], self.get_feats(samp))
     def kid(self, samp): return _calc_kid(self.feats, self.get_feats(samp))
